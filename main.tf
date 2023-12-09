@@ -59,20 +59,6 @@ locals {
   ]
 }
 
-# Global Forwarding rule
-resource "google_compute_global_forwarding_rule" "default" {
-  for_each              = { for i, v in local.forwarding_rules : v.index_key => v if !v.is_regional }
-  project               = each.value.project_id
-  name                  = each.value.name
-  port_range            = each.value.port_range
-  target                = each.value.target
-  ip_address            = each.value.ip_address
-  load_balancing_scheme = each.value.load_balancing_scheme
-  ip_protocol           = each.value.ip_protocol
-  labels                = each.value.labels
-  depends_on            = [google_compute_global_address.default]
-}
-
 # Regional Forwarding rule
 resource "google_compute_forwarding_rule" "default" {
   for_each               = { for i, v in local.forwarding_rules : v.index_key => v if v.is_regional }
@@ -96,6 +82,20 @@ resource "google_compute_forwarding_rule" "default" {
   depends_on             = [google_compute_address.default]
 }
 
+# Global Forwarding rule
+resource "google_compute_global_forwarding_rule" "default" {
+  for_each              = { for i, v in local.forwarding_rules : v.index_key => v if !v.is_regional }
+  project               = each.value.project_id
+  name                  = each.value.name
+  port_range            = each.value.port_range
+  target                = each.value.target
+  ip_address            = each.value.ip_address
+  load_balancing_scheme = each.value.load_balancing_scheme
+  ip_protocol           = each.value.ip_protocol
+  labels                = each.value.labels
+  depends_on            = [google_compute_global_address.default]
+}
+
 
 # Setup local for IP addresses
 locals {
@@ -108,32 +108,22 @@ locals {
   ip_addresses = flatten([for i, v in local._ip_addresses :
     [for ip_version in v.ip_versions :
       {
-        address_type           = v.is_internal ? "INTERNAL" : "EXTERNAL"
+        address_type              = v.is_internal ? "INTERNAL" : "EXTERNAL"
+        name                      = v.name
         forwarding_rule_index_key = v.index_key
-        is_regional            = v.is_regional
-        region                 = v.region
-        subnetwork             = v.subnetwork
-        project_id             = v.project_id
-        prefix_length          = v.is_regional ? 0 : null
-        purpose                = v.is_psc ? "GCE_ENDPOINT" : v.is_managed && v.is_internal ? "SHARED_LOADBALANCER_VIP" : null
-        is_mirroring_collector = v.is_internal ? false : null
-        network_tier           = v.is_psc ? null : v.network_tier
-        address                = v.is_psc ? null : v.ip_address
-        ip_version             = ip_version
-        index_key              = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
+        is_regional               = v.is_regional
+        region                    = v.is_regional ? v.region : "global"
+        subnetwork                = v.subnetwork
+        project_id                = v.project_id
+        prefix_length             = v.is_regional ? 0 : null
+        purpose                   = v.is_psc ? "GCE_ENDPOINT" : v.is_managed && v.is_internal ? "SHARED_LOADBALANCER_VIP" : null
+        network_tier              = v.is_psc ? null : v.network_tier
+        address                   = v.is_psc ? null : v.ip_address
+        ip_version                = ip_version
+        index_key                 = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
       } if v.create == true || coalesce(v.preserve_ip, false) == true
     ]
   ])
-}
-
-# Global static IP
-resource "google_compute_global_address" "default" {
-  for_each     = { for i, v in local.ip_addresses : v.index_key => v if !v.is_regional }
-  project      = each.value.project_id
-  name         = each.value.name
-  address_type = each.value.address_type
-  ip_version   = each.value.ip_version
-  address      = each.value.address
 }
 
 # Regional static IP
@@ -149,4 +139,14 @@ resource "google_compute_address" "default" {
   network_tier  = each.value.network_tier
   purpose       = each.value.purpose
   prefix_length = each.value.prefix_length
+}
+
+# Global static IP
+resource "google_compute_global_address" "default" {
+  for_each     = { for i, v in local.ip_addresses : v.index_key => v if !v.is_regional }
+  project      = each.value.project_id
+  name         = each.value.name
+  address_type = each.value.address_type
+  ip_version   = each.value.ip_version
+  address      = each.value.address
 }
