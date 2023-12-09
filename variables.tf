@@ -53,4 +53,3 @@ variable "lb_frontends" {
   }))
   default = []
 }
- 
