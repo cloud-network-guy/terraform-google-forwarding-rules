@@ -4,7 +4,8 @@ output "forwarding_rules" {
     {
       index_key = v.index_key
       name      = v.name
-      region    = v.region
+      region    = v.is_regional ? v.region : "global"
+      address   = v.is_regional ? google_compute_address.default[v.index_key].address : google_compute_global_address.default[v.index_key].address
     }
   ]
 }
