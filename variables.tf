@@ -50,6 +50,24 @@ variable "lb_frontends" {
     ports                      = optional(list(number))
     all_ports                  = optional(bool)
     labels                     = optional(map(string))
+    psc = optional(object({
+      create                   = optional(bool, false)
+      project_id               = optional(string)
+      host_project_id          = optional(string)
+      description              = optional(string)
+      forwarding_rule_name     = optional(string)
+      target_service_id        = optional(string)
+      nat_subnets              = optional(list(string))
+      enable_proxy_protocol    = optional(bool)
+      auto_accept_all_projects = optional(bool)
+      accept_project_ids = optional(list(object({
+        project_id       = string
+        connection_limit = optional(number)
+      })))
+      domain_names          = optional(list(string))
+      consumer_reject_lists = optional(list(string))
+      reconcile_connections = optional(bool)
+    }))
   }))
   default = []
 }
