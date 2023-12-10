@@ -158,20 +158,21 @@ resource "google_compute_global_address" "default" {
 locals {
   _service_attachments = [for i, v in local.forwarding_rules :
     {
-      is_regional              = v.is_regional
-      create                   = coalesce(v.create, true)
-      project_id               = v.project_id
-      name                     = coalesce(v.psc.name, v.name)
-      description              = coalesce(v.psc.description, "PSC Publish for '${v.name}'")
-      region                   = v.region
-      reconcile_connections    = coalesce(v.psc.reconcile_connections, true)
-      enable_proxy_protocol    = coalesce(v.psc.enable_proxy_protocol, false)
-      auto_accept_all_projects = coalesce(v.psc.auto_accept_all_projects, false)
-      accept_project_ids       = coalesce(v.psc.accept_project_ids, [])
-      consumer_reject_lists    = coalesce(v.psc.consumer_reject_lists, [])
-      domain_names             = coalesce(v.psc.domain_names, [])
-      host_project_id          = coalesce(v.psc.host_project_id, v.host_project_id, v.project_id)
-      nat_subnets              = coalesce(v.psc.nat_subnets, [])
+      is_regional               = v.is_regional
+      create                    = coalesce(v.create, true)
+      project_id                = v.project_id
+      name                      = coalesce(v.psc.name, v.name)
+      description               = coalesce(v.psc.description, "PSC Publish for '${v.name}'")
+      region                    = v.region
+      reconcile_connections     = coalesce(v.psc.reconcile_connections, true)
+      enable_proxy_protocol     = coalesce(v.psc.enable_proxy_protocol, false)
+      auto_accept_all_projects  = coalesce(v.psc.auto_accept_all_projects, false)
+      accept_project_ids        = coalesce(v.psc.accept_project_ids, [])
+      consumer_reject_lists     = coalesce(v.psc.consumer_reject_lists, [])
+      domain_names              = coalesce(v.psc.domain_names, [])
+      host_project_id           = coalesce(v.psc.host_project_id, v.host_project_id, v.project_id)
+      nat_subnets               = coalesce(v.psc.nat_subnets, [])
+      forwarding_rule_index_key = v.index_key
     } if v.psc != null
   ]
   service_attachments = [for i, v in local._service_attachments :
