@@ -178,7 +178,7 @@ locals {
     merge(v, {
       connection_preference = v.auto_accept_all_projects ? "ACCEPT_AUTOMATIC" : "ACCEPT_MANUAL"
       nat_subnets = flatten([for nat_subnet in v.nat_subnets :
-        [startswith("projects/", nat_subnet) ? nat_subnet : "projects/${v.host_project_id}/regions/${v.region}/subnetworks/${v.nat_subnet}"]
+        [startswith("projects/", nat_subnet) ? nat_subnet : "projects/${v.host_project_id}/regions/${v.region}/subnetworks/${nat_subnet}"]
       ])
       accept_project_ids = [for p in v.accept_project_ids :
         {
