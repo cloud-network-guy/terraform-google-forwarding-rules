@@ -161,6 +161,7 @@ locals {
       is_regional              = v.is_regional
       create                   = coalesce(v.create, true)
       project_id               = v.project_id
+      name                     = coalesce(v.psc.name, v.name)
       description              = coalesce(v.psc.description, "PSC Publish for '${v.name}'")
       region                   = v.region
       reconcile_connections    = coalesce(v.psc.reconcile_connections, true)
