@@ -54,6 +54,7 @@ variable "lb_frontends" {
       create                   = optional(bool, false)
       project_id               = optional(string)
       host_project_id          = optional(string)
+      name                     = optional(string)
       description              = optional(string)
       forwarding_rule_name     = optional(string)
       target_service_id        = optional(string)
