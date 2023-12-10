@@ -4,6 +4,7 @@ locals {
     {
       create                 = coalesce(v.create, true)
       project_id             = coalesce(v.project_id, var.project_id)
+      host_project_id        = try(coalesce(v.host_project_id, var.host_project_id), null)
       name                   = coalesce(v.name, "${var.name_prefix}-${i}")
       description            = coalesce(v.description, "Managed by Terraform")
       region                 = try(coalesce(v.region, var.region), null)
@@ -157,7 +158,7 @@ resource "google_compute_global_address" "default" {
 locals {
   _service_attachments = [for i, v in local.forwarding_rules :
     {
-      is_regional            = v.is_regional
+      is_regional              = v.is_regional
       create                   = coalesce(v.create, true)
       project_id               = v.project_id
       description              = coalesce(v.psc.description, "PSC Publish for '${v.name}'")
