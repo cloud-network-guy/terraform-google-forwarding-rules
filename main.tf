@@ -166,6 +166,7 @@ locals {
       reconcile_connections    = coalesce(v.psc.reconcile_connections, true)
       enable_proxy_protocol    = coalesce(v.psc.enable_proxy_protocol, false)
       auto_accept_all_projects = coalesce(v.psc.auto_accept_all_projects, false)
+      accept_project_ids       = coalesce(v.accept_project_ids, [])
       consumer_reject_lists    = coalesce(v.psc.consumer_reject_lists, [])
       domain_names             = coalesce(v.psc.domain_names, [])
       host_project_id          = coalesce(v.psc.host_project_id, v.host_project_id, v.project_id)
@@ -179,7 +180,7 @@ locals {
         [starts_with("projects/", nat_subnet) ? nat_subnet : "projects/${v.host_project_id}/regions/${v.region}/subnetworks/${v.nat_subnet}"]
       ])
       accept_project_ids = [
-        for p in coalesce(v.accept_project_ids, []) : {
+        for p in v.accept_project_ids : {
           project_id       = p.project_id
           connection_limit = coalesce(p.connection_limit, 10)
         }
