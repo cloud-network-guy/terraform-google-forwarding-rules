@@ -157,7 +157,7 @@ resource "google_compute_global_address" "default" {
 locals {
   _service_attachments = [for i, v in local.forwarding_rules :
     {
-      v.is_regional            = v.is_regional
+      is_regional            = v.is_regional
       create                   = coalesce(v.create, true)
       project_id               = v.project_id
       description              = coalesce(v.psc.description, "PSC Publish for '${v.name}'")
@@ -168,7 +168,7 @@ locals {
       consumer_reject_lists    = coalesce(v.psc.consumer_reject_lists, [])
       domain_names             = coalesce(v.psc.domain_names, [])
       host_project_id          = coalesce(v.psc.host_project_id, v.host_project_id, v.project_id)
-      nat_subnets              = coalesce(v.nat_subnets, [])
+      nat_subnets              = coalesce(v.psc.nat_subnets, [])
     } if v.psc != null
   ]
   service_attachments = [for i, v in local._service_attachments :
