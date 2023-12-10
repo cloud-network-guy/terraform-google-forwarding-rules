@@ -186,13 +186,14 @@ locals {
         }
       ]
       target_service = try(google_compute_forwarding_rule.default[v.forwarding_rule_index_key].id, null)
+      index_key      = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : null
     }) if v.create == true
   ]
 }
 
 # Service Attachment (PSC Publish)
 resource "google_compute_service_attachment" "default" {
-  for_each              = { for k, v in local.service_attachments : v.key => v if v.is_regional }
+  for_each              = { for k, v in local.service_attachments : v.index_key => v if v.is_regional }
   project               = each.value.project_id
   name                  = each.value.name
   region                = each.value.region
