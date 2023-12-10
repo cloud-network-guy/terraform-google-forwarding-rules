@@ -23,6 +23,7 @@ locals {
       allow_global_access    = coalesce(v.allow_global_access, false)
       backend_service        = coalesce(v.backend_service_id, v.backend_service, v.backend_service_name)
       target                 = try(coalesce(v.target_id, v.target, v.target_name), null)
+      psc                    = v.psc
     } if v.create == true || coalesce(v.preserve_ip, false) == true
   ]
   __forwarding_rules = [for i, v in local._forwarding_rules :
