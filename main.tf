@@ -57,7 +57,7 @@ locals {
     merge(v, {
       load_balancing_scheme = v.is_psc ? "" : v.load_balancing_scheme
       index_key             = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
-    }) if v.create == true
+    })
   ]
 }
 
