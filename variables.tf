@@ -51,7 +51,7 @@ variable "lb_frontends" {
     all_ports                  = optional(bool)
     labels                     = optional(map(string))
     psc = optional(object({
-      create                   = optional(bool, false)
+      create                   = optional(bool)
       project_id               = optional(string)
       host_project_id          = optional(string)
       name                     = optional(string)

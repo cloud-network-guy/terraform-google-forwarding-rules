@@ -105,7 +105,7 @@ locals {
     merge(v, {
       name        = coalesce(v.address_name, v.name)
       ip_versions = v.is_internal || v.is_regional ? ["IPV4"] : concat(v.enable_ipv4 ? ["IPV4"] : [], v.enable_ipv6 ? ["IPV6"] : [])
-    }) if v.create == true || v.preserve_ip == true
+    })
   ]
   ip_addresses = flatten([for i, v in local._ip_addresses :
     [for ip_version in v.ip_versions :
@@ -156,10 +156,10 @@ resource "google_compute_global_address" "default" {
 
 
 locals {
+  nat_subnet_prefix = "https://www.googleapis.com/compute/v1/projects"
   _service_attachments = [for i, v in local.forwarding_rules :
     {
       is_regional               = v.is_regional
-      create                    = coalesce(v.create, true)
       project_id                = v.project_id
       name                      = coalesce(v.psc.name, v.name)
       description               = coalesce(v.psc.description, "PSC Publish for '${v.name}'")
@@ -177,9 +177,9 @@ locals {
   ]
   service_attachments = [for i, v in local._service_attachments :
     merge(v, {
-      connection_preference = v.auto_accept_all_projects ? "ACCEPT_AUTOMATIC" : "ACCEPT_MANUAL"
+      connection_preference = v.auto_accept_all_projects && length(v.accept_project_ids) == 0 ? "ACCEPT_AUTOMATIC" : "ACCEPT_MANUAL"
       nat_subnets = flatten([for nat_subnet in v.nat_subnets :
-        [startswith("projects/", nat_subnet) ? nat_subnet : "projects/${v.host_project_id}/regions/${v.region}/subnetworks/${nat_subnet}"]
+        [startswith("projects/", nat_subnet) ? nat_subnet : "${local.nat_subnet_prefix}/${v.host_project_id}/regions/${v.region}/subnetworks/${nat_subnet}"]
       ])
       accept_project_ids = [for p in v.accept_project_ids :
         {
@@ -187,7 +187,7 @@ locals {
           connection_limit = coalesce(p.connection_limit, 10)
         }
       ]
-      target_service = try(google_compute_forwarding_rule.default[v.forwarding_rule_index_key].id, null)
+      target_service = try(google_compute_forwarding_rule.default[v.forwarding_rule_index_key].self_link, null)
       index_key      = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : null
     }) if v.create == true
   ]
