@@ -189,7 +189,7 @@ locals {
       ]
       target_service = try(google_compute_forwarding_rule.default[v.forwarding_rule_index_key].self_link, null)
       index_key      = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : null
-    }) if v.create == true
+    })
   ]
 }
 
