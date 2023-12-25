@@ -13,7 +13,6 @@ locals {
       network                = coalesce(v.network, var.network, "default")
       subnet                 = v.subnet
       labels                 = { for k, v in coalesce(v.labels, {}) : k => lower(replace(v, " ", "_")) }
-      is_psc                 = false # TODO
       ip_address             = v.ip_address
       address_name           = v.ip_address_name
       enable_ipv4            = coalesce(v.enable_ipv4, true)
@@ -22,7 +21,7 @@ locals {
       is_managed             = false # TODO
       is_mirroring_collector = false # TODO
       allow_global_access    = coalesce(v.allow_global_access, false)
-      backend_service        = coalesce(v.backend_service_id, v.backend_service, v.backend_service_name)
+      backend_service        = try(coalesce(v.backend_service_id, v.backend_service, v.backend_service_name), null)
       target                 = try(coalesce(v.target_id, v.target, v.target_name), null)
       psc                    = v.psc
     } if v.create == true || coalesce(v.preserve_ip, false) == true
@@ -32,7 +31,9 @@ locals {
       is_regional = try(coalesce(v.region, v.subnet), null) != null ? true : false
       is_internal = lookup(v, "subnet", null) != null ? true : false
       ip_protocol = length(v.ports) > 0 || v.all_ports ? "TCP" : "HTTP"
-      target      = v.backend_service == null ? coalesce(v.target_id, v.target) : null
+      is_psc      = coalesce(v.target_id, v.target) != null ? true : false
+      target      = v.backend_service == null ? v.target : null
+      target_project_id = lookup(v, "target_project_id", v.project_id)
     })
   ]
   ___forwarding_rules = [for i, v in local.__forwarding_rules :
@@ -41,10 +42,13 @@ locals {
       subnetwork   = v.is_psc ? null : v.subnet
       all_ports    = v.is_psc || length(v.ports) > 0 ? false : v.all_ports
       port_range   = v.is_managed ? v.port_range : null
-      target       = v.is_regional ? (contains(["TCP", "SSL"], v.ip_protocol) ? (v.is_psc ? v.target : null) : null) : null
-      backend_service = startswith(v.backend_service, "projects/") ? v.backend_service : (
+      #target       = v.is_regional ? (contains(["TCP", "SSL"], v.ip_protocol) ? (v.is_psc ? v.target : null) : null) : null
+      target = v.target != null ? (startswith(v.target, "projects/") ? v.target : (
+        "projects/${v.target_project_id}/${(v.is_regional ? "regions/${v.region}" : "global")}/backendServices/${v.target}"
+      )) : null
+      backend_service = v.backend_service != null ? (startswith(v.backend_service, "projects/") ? v.backend_service : (
         "projects/${v.project_id}/${(v.is_regional ? "regions/${v.region}" : "global")}/backendServices/${v.backend_service}"
-      )
+      )) : null
     })
   ]
   ____forwarding_rules = [for i, v in local.___forwarding_rules :
@@ -70,7 +74,7 @@ resource "google_compute_forwarding_rule" "default" {
   ports                  = each.value.ports
   all_ports              = each.value.all_ports
   backend_service        = each.value.backend_service
-  target                 = null
+  target                 = each.value.target
   ip_address             = each.value.ip_address
   load_balancing_scheme  = each.value.load_balancing_scheme
   ip_protocol            = each.value.ip_protocol
