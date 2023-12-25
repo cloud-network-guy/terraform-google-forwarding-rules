@@ -31,7 +31,7 @@ locals {
       is_regional = try(coalesce(v.region, v.subnet), null) != null ? true : false
       is_internal = lookup(v, "subnet", null) != null ? true : false
       ip_protocol = length(v.ports) > 0 || v.all_ports ? "TCP" : "HTTP"
-      is_psc      = coalesce(v.target_id, v.target) != null ? true : false
+      is_psc      = v.target_id != null || v.target) != null ? true : false
       target      = v.backend_service == null ? v.target : null
       target_project_id = lookup(v, "target_project_id", v.project_id)
     })
