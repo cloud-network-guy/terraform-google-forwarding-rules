@@ -23,12 +23,13 @@ locals {
       allow_global_access    = coalesce(v.allow_global_access, false)
       backend_service        = try(coalesce(v.backend_service_id, v.backend_service, v.backend_service_name), null)
       target                 = try(coalesce(v.target_id, v.target, v.target_name), null)
+      target_region          = v.target_region
       psc                    = v.psc
     } if v.create == true || coalesce(v.preserve_ip, false) == true
   ]
   __forwarding_rules = [for i, v in local._forwarding_rules :
     merge(v, {
-      is_regional = try(coalesce(v.region, v.subnet), null) != null ? true : false
+      is_regional = try(coalesce(v.region, v.target_region, v.subnet), null) != null ? true : false
       is_internal = lookup(v, "subnet", null) != null ? true : false
       ip_protocol = length(v.ports) > 0 || v.all_ports ? "TCP" : "HTTP"
       is_psc      = lookup(v, "target_id", null) != null || v.target != null ? true : false
