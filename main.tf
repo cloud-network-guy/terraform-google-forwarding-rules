@@ -41,7 +41,7 @@ locals {
   ___forwarding_rules = [for i, v in local.__forwarding_rules :
     merge(v, {
       network_tier = v.is_managed && !v.is_internal ? "STANDARD" : null
-      subnetwork   = v.is_psc ? null : v.subnet
+      subnetwork   = v.subnet
       ip_protocol  = v.is_psc ? null : v.ip_protocol
       all_ports    = v.is_psc || length(v.ports) > 0 ? false : v.all_ports
       port_range   = v.is_managed ? v.port_range : null
