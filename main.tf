@@ -24,6 +24,7 @@ locals {
       backend_service        = try(coalesce(v.backend_service_id, v.backend_service, v.backend_service_name), null)
       target                 = try(coalesce(v.target_id, v.target, v.target_name), null)
       target_region          = v.target_region
+      target_project_id      = v.target_project_id
       psc                    = v.psc
     } if v.create == true || coalesce(v.preserve_ip, false) == true
   ]
@@ -34,7 +35,6 @@ locals {
       ip_protocol       = length(v.ports) > 0 || v.all_ports ? "TCP" : "HTTP"
       is_psc            = lookup(v, "target_id", null) != null || v.target != null ? true : false
       target            = v.backend_service == null ? v.target : null
-      target_project_id = lookup(v, "target_project_id", v.project_id)
       target_region     = try(coalesce(v.target_region, v.region != null ? v.region : null), null)
     })
   ]
@@ -47,7 +47,7 @@ locals {
       port_range   = v.is_managed ? v.port_range : null
       #target       = v.is_regional ? (contains(["TCP", "SSL"], v.ip_protocol) ? (v.is_psc ? v.target : null) : null) : null
       target = v.target != null ? (startswith(v.target, "projects/") ? v.target : (
-        "projects/${v.target_project_id}/${(v.is_regional ? "regions/${v.target_region}" : "global")}/backendServices/${v.target}"
+        "projects/${v.target_project_id}/${(v.is_regional ? "regions/${v.target_region}" : "global")}/serviceAttachments/${v.target}"
       )) : null
       backend_service = v.backend_service != null ? (startswith(v.backend_service, "projects/") ? v.backend_service : (
         "projects/${v.project_id}/${(v.is_regional ? "regions/${v.region}" : "global")}/backendServices/${v.backend_service}"
