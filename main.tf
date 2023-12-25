@@ -86,7 +86,7 @@ resource "google_compute_forwarding_rule" "default" {
   is_mirroring_collector = each.value.is_mirroring_collector
   network                = each.value.network
   region                 = each.value.region
-  subnetwork             = each.value.subnetwork
+  subnetwork             = each.value.is_psc ? null : each.value.subnetwork
   network_tier           = each.value.network_tier
   allow_global_access    = each.value.allow_global_access
   depends_on             = [google_compute_address.default]
