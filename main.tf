@@ -42,6 +42,7 @@ locals {
     merge(v, {
       network_tier = v.is_managed && !v.is_internal ? "STANDARD" : null
       subnetwork   = v.is_psc ? null : v.subnet
+      ip_protocol  = v.is_psc ? null : v.ip_protocol
       all_ports    = v.is_psc || length(v.ports) > 0 ? false : v.all_ports
       port_range   = v.is_managed ? v.port_range : null
       #target       = v.is_regional ? (contains(["TCP", "SSL"], v.ip_protocol) ? (v.is_psc ? v.target : null) : null) : null
@@ -55,6 +56,7 @@ locals {
   ]
   ____forwarding_rules = [for i, v in local.___forwarding_rules :
     merge(v, {
+      region                = v.is_regional ? coalesce(v.region, v.target_region) : null
       load_balancing_scheme = v.is_managed ? v.is_internal ? "INTERNAL_MANAGED" : (v.is_classic ? "EXTERNAL" : "EXTERNAL_MANAGED") : (v.is_internal ? "INTERNAL" : "EXTERNAL")
       allow_global_access   = v.is_internal ? v.allow_global_access : null
     })
