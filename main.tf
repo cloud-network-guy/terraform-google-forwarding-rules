@@ -30,12 +30,12 @@ locals {
   ]
   __forwarding_rules = [for i, v in local._forwarding_rules :
     merge(v, {
-      is_regional       = try(coalesce(v.region, v.target_region, v.subnet), null) != null ? true : false
-      is_internal       = lookup(v, "subnet", null) != null ? true : false
-      ip_protocol       = length(v.ports) > 0 || v.all_ports ? "TCP" : "HTTP"
-      is_psc            = lookup(v, "target_id", null) != null || v.target != null ? true : false
-      target            = v.backend_service == null ? v.target : null
-      target_region     = try(coalesce(v.target_region, v.region != null ? v.region : null), null)
+      is_regional   = try(coalesce(v.region, v.target_region, v.subnet), null) != null ? true : false
+      is_internal   = lookup(v, "subnet", null) != null ? true : false
+      ip_protocol   = length(v.ports) > 0 || v.all_ports ? "TCP" : "HTTP"
+      is_psc        = lookup(v, "target_id", null) != null || v.target != null ? true : false
+      target        = v.backend_service == null ? v.target : null
+      target_region = try(coalesce(v.target_region, v.region != null ? v.region : null), null)
     })
   ]
   ___forwarding_rules = [for i, v in local.__forwarding_rules :
@@ -59,6 +59,7 @@ locals {
       region                = v.is_regional ? coalesce(v.region, v.target_region) : null
       load_balancing_scheme = v.is_managed ? v.is_internal ? "INTERNAL_MANAGED" : (v.is_classic ? "EXTERNAL" : "EXTERNAL_MANAGED") : (v.is_internal ? "INTERNAL" : "EXTERNAL")
       allow_global_access   = v.is_internal && !v.is_psc ? v.allow_global_access : null
+      ip_address            = v.is_psc ? v.ip_address_name : v.ip_address
     })
   ]
   forwarding_rules = [for i, v in local.____forwarding_rules :
