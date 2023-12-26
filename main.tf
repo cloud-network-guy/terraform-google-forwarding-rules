@@ -74,19 +74,18 @@ locals {
   ip_addresses = flatten([for i, v in local._ip_addresses :
     [for ip_version in v.ip_versions :
       {
-        address_type              = v.is_internal ? "INTERNAL" : "EXTERNAL"
-        name                      = v.name
-        forwarding_rule_index_key = v.index_key
-        is_regional               = v.is_regional
-        region                    = v.is_regional ? v.region : "global"
-        subnetwork                = v.subnetwork
-        project_id                = v.project_id
-        prefix_length             = v.is_regional ? 0 : null
-        purpose                   = v.is_psc ? "GCE_ENDPOINT" : v.is_managed && v.is_internal ? "SHARED_LOADBALANCER_VIP" : null
-        network_tier              = v.is_psc ? null : v.network_tier
-        address                   = v.ip_address
-        ip_version                = ip_version
-        index_key                 = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
+        address_type  = v.is_internal ? "INTERNAL" : "EXTERNAL"
+        name          = v.name
+        is_regional   = v.is_regional
+        region        = v.is_regional ? v.region : "global"
+        subnetwork    = v.subnetwork
+        project_id    = v.project_id
+        prefix_length = v.is_regional ? 0 : null
+        purpose       = v.is_psc ? "GCE_ENDPOINT" : v.is_managed && v.is_internal ? "SHARED_LOADBALANCER_VIP" : null
+        network_tier  = v.is_psc ? null : v.network_tier
+        address       = v.ip_address
+        ip_version    = ip_version
+        index_key     = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
       } if v.create == true || coalesce(v.preserve_ip, false) == true
     ]
   ])
@@ -121,7 +120,7 @@ locals {
   forwarding_rules = [
     for i, v in local.____forwarding_rules :
     merge(v, {
-      address_self_link     = try(google_compute_address.default["${v.project_id}/${v.region}/${v.address_name}"].self_link, null)
+      ip_address            = v.is_psc ? try(google_compute_address.default["${v.project_id}/${v.region}/${v.address_name}"].self_link, null) : v.ip_address
       load_balancing_scheme = v.is_psc ? "" : v.load_balancing_scheme
       index_key             = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
     })
@@ -163,10 +162,6 @@ resource "google_compute_global_forwarding_rule" "default" {
   labels                = each.value.labels
   depends_on            = [google_compute_global_address.default]
 }
-
-
-
-
 
 locals {
   nat_subnet_prefix = "https://www.googleapis.com/compute/v1/projects"
