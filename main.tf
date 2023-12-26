@@ -91,6 +91,11 @@ locals {
   ])
 }
 
+# Work-around for scenarios where PSC Consumer Endpoint IP changes
+resource "null_resource" "ip_addresses" {
+  for_each = { for i, v in local.ip_addresses : v.index_key => true if v.purpose == "GCE_ENDPOINT" }
+}
+
 # Regional static IP
 resource "google_compute_address" "default" {
   for_each      = { for i, v in local.ip_addresses : v.index_key => v if v.is_regional }
@@ -104,6 +109,7 @@ resource "google_compute_address" "default" {
   network_tier  = each.value.network_tier
   purpose       = each.value.purpose
   prefix_length = each.value.prefix_length
+  depends_on    = [null_resource.ip_addresses]
 }
 
 # Global static IP
