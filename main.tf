@@ -153,6 +153,7 @@ resource "google_compute_forwarding_rule" "default" {
   subnetwork             = each.value.is_psc ? null : each.value.subnetwork
   network_tier           = each.value.network_tier
   allow_global_access    = each.value.allow_global_access
+  depends_on             = [null_resource.ip_addresses]
 }
 
 # Global Forwarding rule
