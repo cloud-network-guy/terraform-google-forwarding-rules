@@ -126,7 +126,7 @@ locals {
   forwarding_rules = [
     for i, v in local.____forwarding_rules :
     merge(v, {
-      ip_address            = v.is_psc ? try(google_compute_address.default["${v.project_id}/${v.region}/${v.address_name}"].self_link, null) : v.ip_address
+      ip_address            = v.is_psc ? google_compute_address.default["${v.project_id}/${v.region}/${v.address_name}"].self_link : v.ip_address
       load_balancing_scheme = v.is_psc ? "" : v.load_balancing_scheme
       index_key             = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
     })
