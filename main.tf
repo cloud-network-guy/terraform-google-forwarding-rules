@@ -137,7 +137,7 @@ resource "google_compute_forwarding_rule" "default" {
   all_ports              = each.value.all_ports
   backend_service        = each.value.backend_service
   target                 = each.value.target
-  ip_address             = each.value.is_psc ? each.value.address_self_link : each.value.ip_address
+  ip_address             = each.value.ip_address
   load_balancing_scheme  = each.value.load_balancing_scheme
   ip_protocol            = each.value.ip_protocol
   labels                 = each.value.labels
