@@ -129,7 +129,7 @@ locals {
         prefix_length             = v.is_regional ? 0 : null
         purpose                   = v.is_psc ? "GCE_ENDPOINT" : v.is_managed && v.is_internal ? "SHARED_LOADBALANCER_VIP" : null
         network_tier              = v.is_psc ? null : v.network_tier
-        address                   = v.is_psc ? null : v.ip_address
+        address                   = v.ip_address
         ip_version                = ip_version
         index_key                 = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
       } if v.create == true || coalesce(v.preserve_ip, false) == true
