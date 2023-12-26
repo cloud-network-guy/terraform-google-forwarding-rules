@@ -61,56 +61,11 @@ locals {
       allow_global_access   = v.is_internal && !v.is_psc ? v.allow_global_access : null
     })
   ]
-  forwarding_rules = [for i, v in local.____forwarding_rules :
-    merge(v, {
-      address_link          = v.is_psc ? "projects/${v.project_id}/regions/${v.region}/addresses/${v.address_name}" : null
-      load_balancing_scheme = v.is_psc ? "" : v.load_balancing_scheme
-      index_key             = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
-    })
-  ]
 }
-
-# Regional Forwarding rule
-resource "google_compute_forwarding_rule" "default" {
-  for_each               = { for i, v in local.forwarding_rules : v.index_key => v if v.is_regional }
-  project                = each.value.project_id
-  name                   = each.value.name
-  port_range             = each.value.port_range
-  ports                  = each.value.ports
-  all_ports              = each.value.all_ports
-  backend_service        = each.value.backend_service
-  target                 = each.value.target
-  ip_address             = each.value.is_psc ? each.value.address_link : each.value.ip_address
-  load_balancing_scheme  = each.value.load_balancing_scheme
-  ip_protocol            = each.value.ip_protocol
-  labels                 = each.value.labels
-  is_mirroring_collector = each.value.is_mirroring_collector
-  network                = each.value.network
-  region                 = each.value.region
-  subnetwork             = each.value.is_psc ? null : each.value.subnetwork
-  network_tier           = each.value.network_tier
-  allow_global_access    = each.value.allow_global_access
-  depends_on             = [google_compute_address.default]
-}
-
-# Global Forwarding rule
-resource "google_compute_global_forwarding_rule" "default" {
-  for_each              = { for i, v in local.forwarding_rules : v.index_key => v if !v.is_regional }
-  project               = each.value.project_id
-  name                  = each.value.name
-  port_range            = each.value.port_range
-  target                = each.value.target
-  ip_address            = each.value.ip_address
-  load_balancing_scheme = each.value.load_balancing_scheme
-  ip_protocol           = each.value.ip_protocol
-  labels                = each.value.labels
-  depends_on            = [google_compute_global_address.default]
-}
-
 
 # Setup local for IP addresses
 locals {
-  _ip_addresses = [for i, v in local.forwarding_rules :
+  _ip_addresses = [for i, v in local.____forwarding_rules :
     merge(v, {
       name        = coalesce(v.address_name, v.name)
       ip_versions = v.is_internal || v.is_regional ? ["IPV4"] : concat(v.enable_ipv4 ? ["IPV4"] : [], v.enable_ipv6 ? ["IPV6"] : [])
@@ -161,6 +116,55 @@ resource "google_compute_global_address" "default" {
   ip_version   = each.value.ip_version
   address      = each.value.address
 }
+
+locals {
+  forwarding_rules = [
+    for i, v in local.____forwarding_rules :
+    merge(v, {
+      address_self_link     = try(google_compute_address.default["${v.project_id}/${v.region}/${v.address_name}"].self_link, null)
+      load_balancing_scheme = v.is_psc ? "" : v.load_balancing_scheme
+      index_key             = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
+    })
+  ]
+}
+
+# Regional Forwarding rule
+resource "google_compute_forwarding_rule" "default" {
+  for_each               = { for i, v in local.forwarding_rules : v.index_key => v if v.is_regional }
+  project                = each.value.project_id
+  name                   = each.value.name
+  port_range             = each.value.port_range
+  ports                  = each.value.ports
+  all_ports              = each.value.all_ports
+  backend_service        = each.value.backend_service
+  target                 = each.value.target
+  ip_address             = each.value.is_psc ? each.value.address_self_link : each.value.ip_address
+  load_balancing_scheme  = each.value.load_balancing_scheme
+  ip_protocol            = each.value.ip_protocol
+  labels                 = each.value.labels
+  is_mirroring_collector = each.value.is_mirroring_collector
+  network                = each.value.network
+  region                 = each.value.region
+  subnetwork             = each.value.is_psc ? null : each.value.subnetwork
+  network_tier           = each.value.network_tier
+  allow_global_access    = each.value.allow_global_access
+}
+
+# Global Forwarding rule
+resource "google_compute_global_forwarding_rule" "default" {
+  for_each              = { for i, v in local.forwarding_rules : v.index_key => v if !v.is_regional }
+  project               = each.value.project_id
+  name                  = each.value.name
+  port_range            = each.value.port_range
+  target                = each.value.target
+  ip_address            = each.value.ip_address
+  load_balancing_scheme = each.value.load_balancing_scheme
+  ip_protocol           = each.value.ip_protocol
+  labels                = each.value.labels
+  depends_on            = [google_compute_global_address.default]
+}
+
+
 
 
 
