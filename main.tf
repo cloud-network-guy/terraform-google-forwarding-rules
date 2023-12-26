@@ -59,11 +59,11 @@ locals {
       region                = v.is_regional ? coalesce(v.region, v.target_region) : null
       load_balancing_scheme = v.is_managed ? v.is_internal ? "INTERNAL_MANAGED" : (v.is_classic ? "EXTERNAL" : "EXTERNAL_MANAGED") : (v.is_internal ? "INTERNAL" : "EXTERNAL")
       allow_global_access   = v.is_internal && !v.is_psc ? v.allow_global_access : null
-      ip_address            = v.is_psc ? "projects/${v.project_id}/regions/${v.region}/addresses/${v.address_name}" : v.ip_address
     })
   ]
   forwarding_rules = [for i, v in local.____forwarding_rules :
     merge(v, {
+      address_link          = v.is_psc ? "projects/${v.project_id}/regions/${v.region}/addresses/${v.address_name}" : null
       load_balancing_scheme = v.is_psc ? "" : v.load_balancing_scheme
       index_key             = v.is_regional ? "${v.project_id}/${v.region}/${v.name}" : "${v.project_id}/${v.name}"
     })
@@ -80,7 +80,7 @@ resource "google_compute_forwarding_rule" "default" {
   all_ports              = each.value.all_ports
   backend_service        = each.value.backend_service
   target                 = each.value.target
-  ip_address             = each.value.ip_address
+  ip_address             = each.value.is_psc ? each.value.address_link : each.value.ip_address
   load_balancing_scheme  = each.value.load_balancing_scheme
   ip_protocol            = each.value.ip_protocol
   labels                 = each.value.labels
